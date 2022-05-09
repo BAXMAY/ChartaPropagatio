@@ -183,6 +183,7 @@ def main():
     # outputDict[structureName].setdefault('Care', list())
     # outputDict[structureName].setdefault('ผจ.', list())
     # outputDict[structureName].setdefault('ผส.', list())
+    outputDict[structureName]['Target'] = structureDict[structureName]['target']
     outputDict[structureName]['SBAC'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['Care'])
     outputDict[structureName]['SBAC'] = outputDict[structureName]['SBAC'].tolist()
     outputDict[structureName]['SBAC+On'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['Care']) + numpy.array(infoDict['On'])
