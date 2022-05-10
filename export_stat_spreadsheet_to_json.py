@@ -167,6 +167,11 @@ def main():
 
   summaryValueListOfList = summaryWorkSheet.get_values()
 
+  structureTypeDict = {
+    'RP': ['UN1'],
+    'SDL': [],
+    'UL': [],
+  }
   rawDataDict = dict()
 
   # Get unprocess data
@@ -228,6 +233,7 @@ def main():
     structureInfoDict = structureDict[structureName]
 
     if structureInfoDict['type'] in ['CL', 'RP']:
+
       followUpRow = structureInfoDict['followUpRow'] - 1
 
       for idx, followUpWorkSheet in enumerate(followUpWorkSheetList):
@@ -248,6 +254,8 @@ def main():
 
     if structureInfoDict['type'] == 'UL':
 
+      structureTypeDict['UL'].append(structureName)
+
       careNameList = structureInfoDict['dependencies']
 
       val = numpy.array(outputDict[careNameList[0]]['1:1'])
@@ -263,6 +271,8 @@ def main():
     structureInfoDict = structureDict[structureName]
 
     if structureInfoDict['type'] == 'SDL':
+
+      structureTypeDict['SDL'].append(structureName)
 
       followUpRow = structureInfoDict['followUpRow'] - 1
 
@@ -310,6 +320,9 @@ def main():
   # Save to file
   with open('nivo_data.json', 'w') as json_file:
     json.dump(graphDataDict, json_file, indent = 2)
+
+  with open('structure_data.json', 'w') as json_file:
+    json.dump(structureTypeDict, json_file, indent = 2)
 
 if __name__ == '__main__':
   main()
