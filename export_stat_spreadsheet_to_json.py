@@ -49,12 +49,12 @@ log = logging.getLogger(__name__)
 #
 #################################################
 
-def range_char(start: str, stop: str) -> tuple[str, ...]:
-  ''' Return tuple of character from @start to @stop
-  '''
+# def range_char(start: str, stop: str) -> tuple[str, ...]:
+#   ''' Return tuple of character from @start to @stop
+#   '''
 
-  for number in range(ord(start), ord(stop) + 1):
-        yield(chr(number))
+#   for number in range(ord(start), ord(stop) + 1):
+#         yield(chr(number))
 
 def col2num(col):
   ''' Convert excel column name to number
@@ -65,7 +65,8 @@ def col2num(col):
       num = num * 26 + (ord(c.upper()) - ord('A')) + 1
   return num
 
-def getAllSundayInMonth(month: int) -> list:
+# def getAllSundayInMonth(month: int) -> list:
+def getAllSundayInMonth(month: int):
   ''' Return list of datetime object
   '''
 
