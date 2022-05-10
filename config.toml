@@ -25,8 +25,8 @@ leaderFollowUpDataColumn = "X"
 # Metric of data and how to compute them
 # Exclude 1:1 and Target since they have specific method to obtain the data
 [metrics]
-SBAC = "S + BT + ATP + Care"
-SBACON = "S + BT + ATP + Care + On"
+SBAC = "S + BT + ATP + C"
+SBACON = "S + BT + ATP + C + On"
 Care = "Care"
 "ผจ." = "ผจ."
 "ผส." = "ผส."

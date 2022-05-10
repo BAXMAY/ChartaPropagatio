@@ -16,8 +16,7 @@ Copyright 2022, Baramee Thunyapoo
 #################################################
 
 # Std Library
-from curses import raw
-from email.policy import default
+import datetime
 import string
 import sys
 import logging
@@ -58,11 +57,30 @@ def range_char(start: str, stop: str) -> tuple[str, ...]:
         yield(chr(number))
 
 def col2num(col):
-    num = 0
-    for c in col:
-        if c in string.ascii_letters:
-            num = num * 26 + (ord(c.upper()) - ord('A')) + 1
-    return num
+  ''' Convert excel column name to number
+  '''
+  num = 0
+  for c in col:
+    if c in string.ascii_letters:
+      num = num * 26 + (ord(c.upper()) - ord('A')) + 1
+  return num
+
+def getAllSundayInMonth(month: int) -> list:
+  ''' Return list of datetime object
+  '''
+
+  today = datetime.date.today()
+  day = datetime.date(today.year, month, 1)
+  single_day = datetime.timedelta(days=1)
+
+  sundayList = list()
+  while day.month == month:
+    if day.weekday() == 6:
+      sundayList.append(day)
+    day += single_day
+
+  # print( 'Sundays:', sundayList )
+  return sundayList
 
 #################################################
 #
@@ -122,6 +140,7 @@ def main():
   sheetSettingDict = configDict['common']
   outputMetricDict = configDict['metrics']
   structureDict = configDict['structure']
+  month: int = sheetSettingDict['month']
 
   summarySheetName = sheetSettingDict['summarySheetName']
   # structureNameCol = sheetSettingDict['structureNameCol']
@@ -132,9 +151,13 @@ def main():
   followUpDataColumnList = sheetSettingDict['followUpDataColumnList']
   leaderFollowUpDataColumn = sheetSettingDict['leaderFollowUpDataColumn']
 
-  print(weekRangeList)
-  print(followUpSheetNameList)
-  # return
+  # get all sunday in month
+  sundayList = getAllSundayInMonth(month)
+
+  if num_week > len(sundayList):
+    log.critical(f'Month {month} has only {len(sundayList)} weeks. but want {num_week} week.')
+    return
+
   # Get credential of service account
   client = gspread.service_account(credential_file_path)
   sheet = client.open_by_key(spreadsheet_id)
@@ -178,15 +201,10 @@ def main():
   # metrics
   for structureName, infoDict in rawDataDict.items():
     outputDict.setdefault(structureName, dict())
-    # outputDict[structureName].setdefault('SBAC', list())
-    # outputDict[structureName].setdefault('SBAC+On', list())
-    # outputDict[structureName].setdefault('Care', list())
-    # outputDict[structureName].setdefault('ผจ.', list())
-    # outputDict[structureName].setdefault('ผส.', list())
     outputDict[structureName]['Target'] = structureDict[structureName]['target']
-    outputDict[structureName]['SBAC'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['Care'])
+    outputDict[structureName]['SBAC'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['C'])
     outputDict[structureName]['SBAC'] = outputDict[structureName]['SBAC'].tolist()
-    outputDict[structureName]['SBAC+On'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['Care']) + numpy.array(infoDict['On'])
+    outputDict[structureName]['SBAC+On'] = numpy.array(infoDict['S']) + numpy.array(infoDict['BT']) + numpy.array(infoDict['ATP']) + numpy.array(infoDict['C']) + numpy.array(infoDict['On'])
     outputDict[structureName]['SBAC+On'] = outputDict[structureName]['SBAC+On'].tolist()
     outputDict[structureName]['Care'] = numpy.array(infoDict['Care']).tolist()
     outputDict[structureName]['ผจ.'] = numpy.array(infoDict['ผจ.']).tolist()
@@ -205,7 +223,7 @@ def main():
     followUpWorkSheetList.append(followUpWorkSheet)
 
   # Calc and save followUp of each structure in week order 
-  for structureName, metricDict in outputDict.items():
+  for structureName, _ in outputDict.items():
     
     structureInfoDict = structureDict[structureName]
 
@@ -224,7 +242,7 @@ def main():
         outputDict[structureName]['1:1'].append( val )
 
   # UL
-  for structureName, metricDict in outputDict.items():
+  for structureName, _ in outputDict.items():
     
     structureInfoDict = structureDict[structureName]
 
@@ -240,7 +258,7 @@ def main():
       outputDict[structureName]['1:1'] = val.tolist()
 
   # SDL
-  for structureName, metricDict in outputDict.items():
+  for structureName, _ in outputDict.items():
     
     structureInfoDict = structureDict[structureName]
 
@@ -266,9 +284,35 @@ def main():
 
       outputDict[structureName]['1:1'] = val.tolist()
 
+  # Convert to nivo line chart data format
+  graphDataDict = dict()
+  for structureName, metricDict in outputDict.items():
+    graphDataDict[structureName] = list()
+
+    for metricName, data in metricDict.items():
+
+      dataDict = {'id': metricName}
+
+      dataDict['data'] = list()
+
+      if not isinstance(data, list):
+        data = [data] * len(sundayList)
+
+      for idx, sunday in enumerate(sundayList):
+
+        dataDict['data'].append( {
+          "x": sunday.strftime("%d-%b-%Y"),
+          "y": data[idx]
+        } )
+
+      graphDataDict[structureName].append(dataDict)
+
   # Save to file
-  with open('stat.json', 'w') as json_file:
-    json.dump(outputDict, json_file, indent = 2)
+  with open('nivo_data.json', 'w') as json_file:
+    json.dump(graphDataDict, json_file, indent = 2)
 
 if __name__ == '__main__':
   main()
+
+
+
